@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-ingestor
+  labels:
+    app: ingestor
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: ingestor
+  template:
+    metadata:
+      labels:
+        app: ingestor
+    spec:
+      containers:
+        - name: ingestor
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 8081
+              name: http
+          env:
+            - name: INGESTOR_ADDR
+              value: ":8081"
+            - name: CLICKHOUSE_ADDR
+              value: {{ .Values.clickhouse.addr | quote }}
+            - name: CLICKHOUSE_DB
+              value: {{ .Values.clickhouse.db | quote }}
+            - name: CLICKHOUSE_USER
+              value: {{ .Values.clickhouse.user | quote }}
+            - name: CLICKHOUSE_PASSWORD
+              value: {{ .Values.clickhouse.password | quote }}
+            - name: CLICKHOUSE_TLS
+              value: {{ .Values.clickhouse.tls | quote }}
+            {{- with .Values.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

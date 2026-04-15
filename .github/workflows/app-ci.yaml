@@ -1,0 +1,87 @@
+name: App CI
+
+on:
+  push:
+    branches: [main]
+    paths: ['monitoring-app/**']
+  pull_request:
+    branches: [main]
+    paths: ['monitoring-app/**']
+
+env:
+  GCP_PROJECT: ${{ vars.GCP_PROJECT }}
+  GCP_REGION:  ${{ vars.GCP_REGION || 'us-central1' }}
+  REGISTRY:    ${{ vars.GCP_REGION || 'us-central1' }}-docker.pkg.dev/${{ vars.GCP_PROJECT }}/monitoring
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: monitoring-app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: '1.25' }
+      - run: go vet ./...
+      - run: go test ./...
+
+  build-push:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+
+    strategy:
+      matrix:
+        service: [collector, ingestor, api, worker]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_CI_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+      - run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
+
+      - name: Build and push ${{ matrix.service }}
+        id: image
+        working-directory: monitoring-app
+        run: |
+          TAG="${{ github.sha }}"
+          IMAGE="${{ env.REGISTRY }}/${{ matrix.service }}:${TAG}"
+          docker build -t "${IMAGE}" -f deploy/docker/${{ matrix.service }}.Dockerfile .
+          docker push "${IMAGE}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Bump image tag in infrastructure (dev)
+        if: matrix.service != 'worker'
+        uses: actions/github-script@v7
+        env:
+          SERVICE: ${{ matrix.service }}
+          TAG:     ${{ steps.image.outputs.tag }}
+        with:
+          script: |
+            const { SERVICE, TAG } = process.env
+            const tfvarsPath = 'infrastructure/terraform/envs/dev/20-app/terraform.tfvars'
+            const { data: file } = await github.rest.repos.getContent({
+              owner: context.repo.owner, repo: context.repo.repo, path: tfvarsPath
+            })
+            let content = Buffer.from(file.content, 'base64').toString()
+            content = content.replace(
+              new RegExp(`(${SERVICE}_tag\\s*=\\s*)"[^"]*"`),
+              `$1"${TAG}"`
+            )
+            await github.rest.repos.createOrUpdateFileContents({
+              owner: context.repo.owner, repo: context.repo.repo,
+              path: tfvarsPath,
+              message: `ci: bump ${SERVICE} to ${TAG.slice(0,8)}`,
+              content: Buffer.from(content).toString('base64'),
+              sha: file.sha,
+            })

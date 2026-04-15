@@ -1,0 +1,52 @@
+collector:
+  replicaCount: 1
+  env:
+    - name: DEFAULT_PROJECT_ID
+      value: default
+    - name: CLICKHOUSE_ADDR
+      value: "dev-clickhouse:9000"
+    - name: CLICKHOUSE_DB
+      value: monitoring
+    - name: CLICKHOUSE_USER
+      value: default
+    - name: CLICKHOUSE_PASSWORD
+      value: monitoring
+
+ingestor:
+  replicaCount: 1
+  clickhouse:
+    addr: "dev-clickhouse:9000"
+    db: monitoring
+    user: default
+    password: monitoring
+
+api:
+  replicaCount: 1
+  env:
+    - name: DEFAULT_PROJECT_ID
+      value: default
+    - name: CLICKHOUSE_ADDR
+      value: "dev-clickhouse:9000"
+    - name: CLICKHOUSE_DB
+      value: monitoring
+    - name: CLICKHOUSE_USER
+      value: default
+    - name: CLICKHOUSE_PASSWORD
+      value: monitoring
+
+postgresql:
+  enabled: false
+  auth:
+    username: monitoring
+    password: monitoring
+    database: monitoring
+
+clickhouse:
+  enabled: true
+  auth:
+    username: default
+    password: monitoring
+  shards: 1
+  replicaCount: 1
+  persistence:
+    enabled: false  # ephemeral for local dev

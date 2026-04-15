@@ -1,0 +1,22 @@
+replicaCount: 1
+
+image:
+  repository: localhost:5001/console
+  tag: dev
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  host: console.local
+
+resources:
+  requests:
+    cpu: 20m
+    memory: 32Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi

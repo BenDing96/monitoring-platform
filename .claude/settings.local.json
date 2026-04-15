@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(go mod:*)",
+      "Bash(go version:*)",
+      "Bash(make run:*)",
+      "Bash(chmod +x scripts/*.sh)",
+      "Bash(make build:*)",
+      "Bash(go vet:*)",
+      "Bash(command -v helm)",
+      "Bash(helm lint:*)"
+    ]
+  }
+}

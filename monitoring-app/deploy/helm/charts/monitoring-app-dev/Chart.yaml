@@ -1,0 +1,25 @@
+apiVersion: v2
+name: monitoring-app-dev
+description: Umbrella chart for local dev — services + data stores
+type: application
+version: 0.2.0
+appVersion: "0.2.0"
+
+dependencies:
+  - name: collector
+    version: 0.1.0
+    repository: "file://../collector"
+  - name: ingestor
+    version: 0.1.0
+    repository: "file://../ingestor"
+  - name: api
+    version: 0.1.0
+    repository: "file://../api"
+  - name: postgresql
+    version: 15.5.x
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: postgresql.enabled
+  - name: clickhouse
+    version: 6.x.x
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: clickhouse.enabled

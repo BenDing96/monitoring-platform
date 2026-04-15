@@ -1,0 +1,28 @@
+.DS_Store
+.env
+
+# Go
+monitoring-app/bin/
+*.exe
+*.test
+*.out
+
+# Helm
+monitoring-app/deploy/helm/charts/*/charts/
+monitoring-app/deploy/helm/charts/*/Chart.lock
+
+# Tilt
+.tiltbuild/
+tilt_modules/
+
+# Node
+monitoring-console/node_modules/
+monitoring-console/dist/
+
+# Terraform
+**/.terraform/
+**/.terraform.lock.hcl
+**/terraform.tfvars
+**/*.tfplan
+**/*.tfstate
+**/*.tfstate.backup

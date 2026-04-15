@@ -1,0 +1,22 @@
+collector:
+  replicaCount: 1
+  image:
+    pullPolicy: IfNotPresent
+
+ingestor:
+  replicaCount: 1
+  image:
+    pullPolicy: IfNotPresent
+
+api:
+  replicaCount: 1
+  image:
+    pullPolicy: IfNotPresent
+
+postgresql:
+  enabled: false
+
+clickhouse:
+  enabled: true
+  persistence:
+    enabled: false

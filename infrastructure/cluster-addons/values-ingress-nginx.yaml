@@ -1,0 +1,10 @@
+controller:
+  service:
+    type: LoadBalancer
+    annotations:
+      networking.gke.io/load-balancer-type: "External"
+  metrics:
+    enabled: true
+  podAnnotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "10254"

@@ -1,0 +1,22 @@
+load('ext://helm_resource', 'helm_resource', 'helm_repo')
+
+services = ['collector', 'ingestor', 'api']
+
+for svc in services:
+    docker_build(
+        'localhost:5001/' + svc,
+        context='.',
+        dockerfile='deploy/docker/' + svc + '.Dockerfile',
+        only=['go.mod', 'go.sum', 'cmd', 'internal'],
+    )
+
+k8s_yaml(helm(
+    'deploy/helm/charts/monitoring-app-dev',
+    name='dev',
+    namespace='monitoring',
+    values=['deploy/helm/values/dev.yaml'],
+))
+
+k8s_resource('dev-collector', port_forwards=['4318:4318'])
+k8s_resource('dev-ingestor', port_forwards=['8081:8081'])
+k8s_resource('dev-api', port_forwards=['8080:8080'])
